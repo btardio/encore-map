@@ -1,0 +1,43 @@
+<br><br><br><br><br>
+
+<div class="card">
+
+	<div class="card-body">
+
+		<div class="row">
+
+		<!-- Map -->
+		<div class="col-sm-12 col-md-6 col-lg-8">
+
+			<div leaflet myCustomDirective style="height: 300px;"
+			     [leafletOptions]="options"
+			     [leafletLayers]="layers"
+			     [leafletLayersControl]="layersControl"
+				 (leafletMapReady)="initMap($event)">
+				 <a href="http://mapbox.com/about/maps" class='mapbox-wordmark' target="_blank">Mapbox</a>
+			</div>
+
+		</div>
+		
+		</div> <!--  /row -->
+
+	</div>
+	
+	
+	
+	<ul>
+	    <li *ngFor="let store of responseStores">
+    	  {{ store.storename }}
+    	  {{ store.latlonlocation }}
+    	</li>
+	</ul>
+
+	
+	
+	<input maxlength="5" (keyup)="onZipKey($event)">
+	
+</div>
+
+
+
+
