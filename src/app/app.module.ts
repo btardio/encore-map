@@ -3,26 +3,23 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppComponent } from './app.component';
 
-import { LeafletDemoModule } from './leaflet/leaflet-demo.module';
+import { EncoreLeafletModule } from './leaflet/encoreLeaflet.module';
 
 import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
-	imports: [
-		BrowserModule,
-		LeafletDemoModule,
+  imports: [
+    BrowserModule,
+    EncoreLeafletModule,
     HttpClientModule,
-    
-	],
-	declarations: [
-		AppComponent,
-    //MyCustomDirective
-	],
-  exports: [
-    //MyCustomDirective
   ],
-  
-	bootstrap: [ AppComponent ],
-	providers: [ ]//MyCustomDirective ]
+  declarations: [
+    AppComponent,
+],
+  exports: [
+  ],
+
+  bootstrap: [ AppComponent ],
+  providers: [ ]
 })
 export class AppModule { }

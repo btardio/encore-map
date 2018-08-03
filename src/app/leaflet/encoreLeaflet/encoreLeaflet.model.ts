@@ -1,6 +1,6 @@
 import { Layer } from 'leaflet';
 
-export class LeafletLayersDemoModel {
+export class LeafletEncoreLeafletModel {
 
 	constructor(
 		public baseLayers: {
