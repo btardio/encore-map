@@ -1,43 +1,92 @@
 <br><br><br><br><br>
 
-<div class="card">
 
-	<div class="card-body">
+<div style="margin:1px;padding:1px;" class="clr-justify-content-center">
+<!--  style="width:96%;text-align:center;"  -->
+<div class="clr-row">
+    <div class="clr-col-12">
 
-		<div class="row">
-
-		<!-- Map -->
-		<div class="col-sm-12 col-md-6 col-lg-8">
-
-			<div leaflet myCustomDirective style="height: 300px;"
+			<div leaflet myCustomDirective style="text-align:left; height: 300px;z-index: 3;"
 			     [leafletOptions]="options"
 			     [leafletLayers]="layers"
 			     [leafletLayersControl]="layersControl"
 				 (leafletMapReady)="initMap($event)">
 				 <a href="http://mapbox.com/about/maps" class='mapbox-wordmark' target="_blank">Mapbox</a>
 			</div>
+		
+	</div>
+</div>
+<br>
+<div class="clr-row">
+    <div class="clr-col-12">
+    	<hr>
+    </div>
+</div>
+
+<div class="clr-row clr-justify-content-center">
+    <div class="clr-col-2">	
+    	<div style="text-align:center;">
+			<h3>Find Stores Near You</h3>
+			
+			<BR>
+			<form clrForm>
+			  <clr-input-container>
+			    <label>Enter Zip</label>
+			    <input clrInput placeholder="Fill me in, scotty!" maxlength="5" name="ngmodelzip" (keyup)="onZipKey($event)" [(ngModel)]="ngmodelzip" />
+			    <clr-control-error>This field is required!</clr-control-error>
+			  </clr-input-container>
+			</form>
 
 		</div>
-		
-		</div> <!--  /row -->
-
 	</div>
-	
-	
-	
-	<ul>
-	    <li *ngFor="let store of responseStores">
-    	  {{ store.storename }}
-    	  {{ store.latlonlocation }}
-    	</li>
-	</ul>
+</div>
+
+<div class="clr-row">
+    <div class="clr-col-12">
+    	<hr>
+    </div>
+</div>
 
 	
+<div [hidden]="loadinghidden" style="margin:20px; font-face:sans-serif; font-size:16px;">
+	Loading...
+</div>
 	
-	<input maxlength="5" (keyup)="onZipKey($event)">
-	
+<div class="clr-row">
+    <div class="clr-col-1">
+    	<span></span>        
+    </div>
+    <div class="clr-row">
+		<div class="clr-col-3" *ngFor="let store of responseStores">
+			<div class="card">
+	            <div class="card-block">
+	                <div class="card-title">
+	                    {{ store.storename }}
+	                </div>
+	                <div class="card-text">
+	                    
+                        {{ store.storeaddress }}
+                        <br>
+                        {{ store.storecity }} &nbsp; {{ store.storestate }} &nbsp; {{ store.storezip }}
+                        <br>
+	                    
+	                </div>
+	            </div>
+	            <div class="card-footer">
+	                <div>{{ store.storephone }}</div>
+	                <div><a href="/storeurlredirect?url={{ store.storeurl }}">{{ store.storeurl }}</a></div>
+	            </div>
+	        </div>
+		</div> <!-- <div class="clr-col-sm-5" *ngFor="let store of responseStores"> -->
+	</div> <!-- <div class="clr-row" -->
+    <div class="clr-col-1">
+		<span></span>
+	</div>
 </div>
 
 
+</div> <!-- <div style="width:96%"> -->
+
+	
 
 

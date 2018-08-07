@@ -1,15 +1,41 @@
+// todo
+// x check for empty zip from nomitron 61222
+// x in django, the index.html has a css include that probably shouldn't be in the <body>, maybe move to header
+// x remove api key from js, put in python
+// dockerize
+// x pick materialize or bootstrap for formatting of text
+// x fix toolbar z-offset
+// x check for status code 404 from solr
+// x ERROR
+// x Object { headers: {…}, status: 404, statusText: "Not Found", url: "http://127.0.0.1:8983/solr/encorel/select?d=230&df=recip(geodist(),1,1,1)&pt=34.1570947116523,-118.440661197205&q={!geofilt%20score=distance%20sfield=latlonlocationdv%20pt=%2734.1570947116523,-118.440661197205%27%20d=230}&sfield=latlonlocationdv&sort=query({!geofilt%20score=distance%20filter=false%20sfield=latlonlocationdv%20d=230%20v=%27%27})%20asc", ok: false, name: "HttpErrorResponse", message: "Http failure response for http://127.0.0.1:8983/solr/encorel/select?d=230&df=recip(geodist(),1,1,1)&pt=34.1570947116523,-118.440661197205&q={!geofilt%20score=distance%20sfield=latlonlocationdv%20pt=%2734.1570947116523,-118.440661197205%27%20d=230}&sfield=latlonlocationdv&sort=query({!geofilt%20score=distance%20filter=false%20sfield=latlonlocationdv%20d=230%20v=%27%27})%20asc: 404 Not Found", error: "<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"/>\n<title>Error 404 Not Found</title>\n</head>\n<body><h2>HTTP ERROR 404</h2>\n<p>Problem accessing /solr/encorel/select. Reason:\n<pre>    Not Found</pre></p>\n</body>\n</html>\n" }
+//
+// :
+// x submitting zips  before the previous query responds fully produces eratic results, empty queue of requests or terminate updating
+//
+// https://github.com/flauc/angular2-notifications
+//
+// todo send error message to backend for failing url request
+// x python url include/add: /storeurlredirect/
+// after changing the page_header to page_header_start and page_header_end check the contact us form
 
+// adding new menu bar changed size of mobile display transition
 
 import { Component, Directive, ViewChild } from '@angular/core';
 
 import { circle, geoJSON, icon, latLng, Layer, marker, polygon, tileLayer, LatLng } from 'leaflet';
 import { Map as LLMap } from 'leaflet';
 import { LeafletEncoreLeafletModel } from './encoreLeaflet.model';
+import { HttpResponse } from '@angular/common/http';
 import { HttpHeaders } from '@angular/common/http';
 
 import { HttpClient } from '@angular/common/http';
 import { LeafletDirective, LeafletDirectiveWrapper } from '@asymmetrik/ngx-leaflet';
 import { Observable } from 'rxjs';
+
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
+
+import { NotificationsService } from 'angular2-notifications';
+
 
 export interface NomRequest {
   postalcode: string;
@@ -67,11 +93,15 @@ export interface EncoreMarker {
 
 
 @Component({
-  selector: 'leafletLayersDemo',
+  selector: 'app-encoreMap',
   templateUrl: './encoreLeaflet.component.html',
-  providers: [],
+
+
 })
 export class LeafletEncoreLeafletComponent {
+
+  // devUrlStr = 'http://127.0.0.1:8000';
+  devUrlStr = '';
 
   map: LLMap;
 
@@ -84,20 +114,23 @@ export class LeafletEncoreLeafletComponent {
   // Search radius
   distance: number;
 
+  // template ngmodel zip variable
+  ngmodelzip: string;
+
+  loadinghidden: boolean;
+
   attributionStreetStr = '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> | ' +
                                '© <a href="http://www.openstreetmap.org/about/">OpenStreetMap</a> | ' +
                                '<a href="https://www.mapbox.com/map-feedback/">Improve this map</a>';
 
-  urlStreetStr = 'https://api.mapbox.com/styles/v1/mapbox/streets-v9/tiles/256/{z}/{x}/{y}@2x?' +
-                       'access_token=pk.eyJ1IjoiYnRhcmRpbyIsImEiOiJjamthZHlzMjcwbDI0M3h0NGwwNG9sdDFkIn0.umyRO8QAVei9mwDNX2UDDg.png';
+  urlStreetStr = this.devUrlStr + '/mapstreet?z={z}&x={x}&y={y}';
 
   attributionSatelliteStr = '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> | ' +
                                   '© <a href="http://www.openstreetmap.org/about/">OpenStreetMap</a> | ' +
                                   '<a href="https://www.mapbox.com/map-feedback/">Improve this map</a> | ' +
                                   '© <a href="https://www.digitalglobe.com/">Digital Globe</a>';
 
-  urlSatelliteStr = 'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v9/tiles/256/{z}/{x}/{y}@2x?' +
-                          'access_token=pk.eyJ1IjoiYnRhcmRpbyIsImEiOiJjamthZHlzMjcwbDI0M3h0NGwwNG9sdDFkIn0.umyRO8QAVei9mwDNX2UDDg.png';
+  urlSatelliteStr = this.devUrlStr + '/mapsatellite?z={z}&x={x}&y={y}';
 
   // Open Street Map and Open Cycle Map definitions
   LAYER_OCM = {
@@ -131,8 +164,8 @@ export class LeafletEncoreLeafletComponent {
   layers: Layer[];
   layersControl = {
     baseLayers: {
-      'Satellite View': this.LAYER_OSM.layer,
-      'City View': this.LAYER_OCM.layer
+      '<div style="width:100%;"><div style="text-align:left;">Satellite View</div></div>': this.LAYER_OSM.layer,
+      '<div style="width:100%;"><div style="text-align:left;">City View</div></div>': this.LAYER_OCM.layer
     },
   };
 
@@ -143,7 +176,7 @@ export class LeafletEncoreLeafletComponent {
   };
 
 
-  constructor( private http: HttpClient ) {
+  constructor( private http: HttpClient, private notificationService: NotificationsService ) {
 
     // initialize the responseStores array, this is used for rendering html components
     this.responseStores = new Array<SolrResponseDoc>();
@@ -155,9 +188,13 @@ export class LeafletEncoreLeafletComponent {
     this.apply( this.encoreMarkers );
 
     // initial distance, solr search radius
-    this.distance = 100000;
+    this.distance = 100;
 
+    // initially there is no search and loading should be hidden
+    this.loadinghidden = true;
   }
+
+
 
   /**
    * the only way to retrieve an instance of leafletjs map instance, comes from the template (leafletMapReady)="initMap($event)"
@@ -176,8 +213,13 @@ export class LeafletEncoreLeafletComponent {
     if ( (<HTMLInputElement>event.target).value.length === 5 ) {
       // continue only if input is all digits
       if (  (<HTMLInputElement>event.target).value.search(/\d\d\d\d\d/) !== -1 ) {
+
+        this.loadinghidden = false;
+
         // make a request to the solr backend with the zip
         this.makeNomRequest( (<HTMLInputElement>event.target).value );
+      } else {
+        this.notificationService.error('Invalid Zip', 'Please enter a valid zip.');
       }
 
     }
@@ -203,99 +245,120 @@ export class LeafletEncoreLeafletComponent {
 
     this._makeNomRequest( zip ).subscribe( response => {
 
-      this.makeSolrRequest(response[0].lat, response[0].lon, this.distance);
+      if ( (response instanceof Array) && response.length === 0 ) {
+        this.notificationService.error('Invalid Zip', 'Please enter a valid zip.');
+      } else {
+
+      this.makeSolrRequest(response[0].lat, response[0].lon, this.distance, true, 0);
+
+      }
 
     } );
 
   }
 
+
   /**
    * Internal, makes a solr request returning the observable
    */
-  private _makeSolrRequest( lat: number, lon: number, distance: number ): Observable<SolrResponse> {
+  private _makeSolrRequest( lat: number, lon: number, distance: number ): Observable<HttpResponse<SolrResponse>> {
 
-    const urlStr = 'http://127.0.0.1:8983/solr/encorel/select?d=' +
-      distance +
-      '&df=recip(geodist(),1,1,1)&pt=' +
-      lat + ',' + lon +
-      '&q={!geofilt score=distance sfield=latlonlocationdv pt=\'' +
-      lat + ',' + lon +
-      '\' d=' +
-      distance +
-      '}&sfield=latlonlocationdv&sort=query({!geofilt score=distance filter=false sfield=latlonlocationdv d=' +
-      distance +
-      ' v=\'\'}) asc';
+//    const urlStr = 'http://127.0.0.1:8983/solr/encorel/select?d=' +
+//      distance +
+//      '&df=recip(geodist(),1,1,1)&pt=' +
+//      lat + ',' + lon +
+//      '&q={!geofilt score=distance sfield=latlonlocationdv pt=\'' +
+//      lat + ',' + lon +
+//      '\' d=' +
+//      distance +
+//      '}&sfield=latlonlocationdv&sort=query({!geofilt score=distance filter=false sfield=latlonlocationdv d=' +
+//      distance +
+//      ' v=\'\'}) asc';
 
-    return this.http.get<SolrResponse>(urlStr);
+    const urlStr = this.devUrlStr + '/mapsearch?lat=' + lat + '&lon=' + lon + '&distance=' + distance;
+
+    return this.http.get<SolrResponse>(urlStr, { observe: 'response' });
 
   }
 
   /**
    * Makes a solr request, finding the closest 10 nearby stores
    */
-  makeSolrRequest( lat: number, lon: number, distance: number ) {
+  makeSolrRequest( lat: number, lon: number, distance: number, initialRequest: boolean, numRepeats: number ) {
 
-    // center the map view for the zip
-    const ll: LatLng = latLng(lat, lon);
-    this.map.setView(ll, 10);
+    if ( initialRequest ) {
+      // center the map view for the zip
+      const ll: LatLng = latLng(lat, lon);
 
+      this.map.setView(ll, 10);
+    }
 
-    this._makeSolrRequest( lat, lon, distance ).subscribe( response => {
+    this._makeSolrRequest( lat, lon, distance ).subscribe( solrResponse => {
 
-      // if less than 10 stores were found, increase the search radius
-//      if ( response.response.numFound <= 10 ) {
-//        this.makeSolrRequest( lat, lon, distance + 10 );
-//      }
+      const responseBody: SolrResponse = solrResponse.body;
 
-      // assign the var that is used for the html ul
-      this.responseStores = response.response.docs;
+      // less than 10 stores found?? increase the search radius
+      if ( responseBody.response.numFound <= 10 && numRepeats < 30 ) {
+        this.makeSolrRequest( lat, lon, distance + 30, false, numRepeats + 1 );
+      } else {
 
-      // iterate the previous markers, doing the best to remove reference so that they can be garbage collected
-      // attempt to remove layer from dom, may be incomplete and cause memory leak
-      this.encoreMarkers.forEach( itermarker => {
+        this.loadinghidden = true;
 
-        itermarker.layer.getPopup().clearAllEventListeners();
-        itermarker.layer.getPopup().remove();
-        itermarker.layer.getPopup().unbindPopup();
-        itermarker.layer.getPopup().unbindTooltip();
+        // assign the var that is used for the html ul
+        this.responseStores = responseBody.response.docs;
 
-        if ( itermarker.layer.getTooltip() !== undefined ) {
-          itermarker.layer.getTooltip().clearAllEventListeners();
-          itermarker.layer.getTooltip().remove();
-          itermarker.layer.getTooltip().unbindPopup();
-          itermarker.layer.getTooltip().unbindTooltip();
-        }
+        // iterate the previous markers, doing the best to remove reference so that they can be garbage collected
+        // attempt to remove layer from dom, may be incomplete and cause memory leak
+        this.encoreMarkers.forEach( itermarker => {
 
-        itermarker.layer.clearAllEventListeners();
-        itermarker.layer.remove();
-        itermarker.layer.unbindPopup();
-        itermarker.layer.unbindTooltip();
+          itermarker.layer.getPopup().clearAllEventListeners();
+          itermarker.layer.getPopup().remove();
+          itermarker.layer.getPopup().unbindPopup();
+          itermarker.layer.getPopup().unbindTooltip();
 
-        delete itermarker.layer;
-      });
+          if ( itermarker.layer.getTooltip() !== undefined ) {
+            itermarker.layer.getTooltip().clearAllEventListeners();
+            itermarker.layer.getTooltip().remove();
+            itermarker.layer.getTooltip().unbindPopup();
+            itermarker.layer.getTooltip().unbindTooltip();
+          }
 
-      delete this.encoreMarkers;
+          itermarker.layer.clearAllEventListeners();
+          itermarker.layer.remove();
+          itermarker.layer.unbindPopup();
+          itermarker.layer.unbindTooltip();
 
-      this.encoreMarkers = new Array<EncoreMarker>();
+          delete itermarker.layer;
+        });
 
-      // add new markers from result
-      response.response.docs.forEach( iterstore => {
+        delete this.encoreMarkers;
 
-        const storeStr = iterstore.storename + '<br>' +
-                         iterstore.storeaddress + '<br>' +
-                         iterstore.storecity + ' ' + iterstore.storestate + ' ' + iterstore.storezip + '<br>' +
-                         iterstore.storephone + '<br>' +
-                         iterstore.storeurl;
+        this.encoreMarkers = new Array<EncoreMarker>();
 
-        // push the marker on the encoreMarkers list for rendering in apply()
-        this.encoreMarkers.push( this.addNewMarker( Number(iterstore.latlonlocation.split(',')[0]),
-                                                    Number(iterstore.latlonlocation.split(',')[1]), storeStr ) );
+        // add new markers from result
+        responseBody.response.docs.forEach( iterstore => {
 
-      });
+          const storeStr = iterstore.storename + '<br>' +
+                           iterstore.storeaddress + '<br>' +
+                           iterstore.storecity + ' ' + iterstore.storestate + ' ' + iterstore.storezip + '<br>' +
+                           iterstore.storephone + '<br>' +
+                           '<a href="/storeurlredirect?url=' + iterstore.storeurl + '">' + iterstore.storeurl + '</a>';
 
-      // call apply to render the markers
-      this.apply( this.encoreMarkers );
+          // push the marker on the encoreMarkers list for rendering in apply()
+          this.encoreMarkers.push( this.addNewMarker( Number(iterstore.latlonlocation.split(',')[0]),
+                                                      Number(iterstore.latlonlocation.split(',')[1]), storeStr ) );
 
+        });
+
+        // call apply to render the markers
+        this.apply( this.encoreMarkers );
+
+      }
+
+    }, error => {
+      this.notificationService.error('Something has gone wrong making the request. Please try again. ' +
+                                     'If this issue persists please contact us.');
+      // todo send error message to backend
     } );
 
   }
@@ -313,8 +376,10 @@ export class LeafletEncoreLeafletComponent {
       icon: icon({
         iconSize: [ 25, 41 ],
         iconAnchor: [ 13, 41 ],
-        iconUrl: 'assets/marker-icon.png',
-        shadowUrl: 'assets/marker-shadow.png'
+        iconUrl: '/static/page_map/assets/marker-icon.png',
+        // iconUrl: '/assets/marker-icon.png',
+        shadowUrl: '/static/page_map/assets/marker-shadow.png'
+        // shadowUrl: '/assets/marker-shadow.png'
       })
     }).bindPopup(popuptext)
   };

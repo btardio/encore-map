@@ -23,3 +23,6 @@ import 'leaflet/dist/images/marker-icon.png';
 
 // Other Dependencies
 import 'zone.js';
+
+
+import 'angular2-notifications';

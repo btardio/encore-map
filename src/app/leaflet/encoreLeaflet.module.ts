@@ -5,13 +5,19 @@ import { FormsModule } from '@angular/forms';
 import { LeafletModule } from '../../leaflet.module';
 
 import { LeafletEncoreLeafletComponent } from './encoreLeaflet/encoreLeaflet.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { ClrFormsNextModule } from '@clr/angular';
+
+
+
 
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
-    LeafletModule.forRoot()
+    LeafletModule.forRoot(),
+    ClrFormsNextModule,
   ],
   declarations: [
     LeafletEncoreLeafletComponent,
