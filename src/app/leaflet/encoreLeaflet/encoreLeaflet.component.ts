@@ -1,4 +1,5 @@
 // todo
+// NOTE: allowed_hosts has two hosts, it worked with one host
 // x check for empty zip from nomitron 61222
 // x in django, the index.html has a css include that probably shouldn't be in the <body>, maybe move to header
 // x remove api key from js, put in python
