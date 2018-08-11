@@ -3,7 +3,7 @@
 // x check for empty zip from nomitron 61222
 // x in django, the index.html has a css include that probably shouldn't be in the <body>, maybe move to header
 // x remove api key from js, put in python
-// dockerize
+// x dockerize
 // x pick materialize or bootstrap for formatting of text
 // x fix toolbar z-offset
 // x check for status code 404 from solr
@@ -19,7 +19,7 @@
 // x python url include/add: /storeurlredirect/
 // after changing the page_header to page_header_start and page_header_end check the contact us form
 
-// adding new menu bar changed size of mobile display transition
+// x adding new menu bar changed size of mobile display transition
 
 import { Component, Directive, ViewChild } from '@angular/core';
 
@@ -297,6 +297,32 @@ export class LeafletEncoreLeafletComponent {
     this._makeSolrRequest( lat, lon, distance ).subscribe( solrResponse => {
 
       const responseBody: SolrResponse = solrResponse.body;
+
+      responseBody.response.docs.forEach( doc => {
+
+        let areacode: string;
+        let firstthree: string;
+        let lastfour: string;
+
+        if ( doc.storephone !== undefined && doc.storephone !== null ) {
+          doc.storephone = doc.storephone.replace('(', '').replace(')', '').replace('-', '');
+          areacode = doc.storephone.slice(0, 3);
+          firstthree = doc.storephone.slice(3, 6);
+          lastfour = doc.storephone.slice(6, 10);
+
+          doc.storephone = '(' + areacode + ')' + ' ' + firstthree + '-' + lastfour;
+        } else {
+          doc.storephone = '';
+        }
+
+        if ( doc.storename === undefined || doc.storename === null ) { doc.storename = ''; }
+        if ( doc.storeaddress === undefined || doc.storeaddress === null ) { doc.storeaddress = ''; }
+        if ( doc.storecity === undefined || doc.storecity === null ) { doc.storecity = ''; }
+        if ( doc.storestate === undefined || doc.storestate === null ) { doc.storestate = ''; }
+        if ( doc.storezip === undefined || doc.storezip === null ) { doc.storezip = ''; }
+        if ( doc.storephone === undefined || doc.storephone === null ) { doc.storephone = ''; }
+
+      });
 
       // less than 10 stores found?? increase the search radius
       if ( responseBody.response.numFound <= 10 && numRepeats < 30 ) {
